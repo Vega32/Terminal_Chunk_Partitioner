@@ -71,8 +71,8 @@ class PeerNode:
 
 if __name__ == "__main__":
     # Replace with your device's actual IP address
-    node_host = '0.0.0.0'  # Device IP
-    node_port = 5002  # Node port
+    node_host = '192.168.13.242'  # Device IP
+    node_port = 5001  # Node port
 
     node = PeerNode(node_host, node_port)
 
