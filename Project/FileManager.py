@@ -79,8 +79,6 @@ class FileManager:
     def store_array_object_file(packets, file_name):
         with open(file_name + '.pkl', 'wb') as file:
             pickle.dump(packets, file)
-        
-        return "Success"
     
     #Store array of packets as object file
     @staticmethod

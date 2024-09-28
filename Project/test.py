@@ -1,6 +1,7 @@
 import socket
 import threading
 import FileManager
+import os
 
 class P2PNode:
     def __init__(self, host='0.0.0.0', port='12345'):
@@ -62,6 +63,31 @@ class P2PNode:
         packets=FileManager.FileManager.divide_into_packets(fileName)
         for i in range (len(packets)):
             self.peers[i%len(self.peers)].send(packets[i])
+
+
+    def download(self, file_name):
+        
+        pickle_files = []
+        retrieved_packets = []
+        ordered_packets = []
+        for peer in self.peers:
+            for file in os.listdir():
+                if file.startswith(file_name) and file.endswith('.pkl'):
+                    FileManager.FileManager.load_array_object_file(file)
+                    pickle_files.append(retrieved_packets)
+        
+        count = 0
+        while (count != retrieved_packets[0][4:7]):
+            for packet in retrieved_packets:
+                if (packet[:4] == count):
+                    ordered_packets.append(packet)
+                    count += 1
+
+        if (FileManager.FileManager.reconstruct_file(ordered_packets, file_name)):
+            print("Download Successful")
+        else:
+            print("Something went wrong when retrieving the file")
+
 
 if __name__ == "__main__":
     port=input("Enter a Port: ")
