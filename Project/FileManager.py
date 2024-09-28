@@ -30,13 +30,13 @@ def divide_into_packets(file_path):
     nb_packets = (file_full_size + PACKET_SIZE -1) // PACKET_SIZE
     
     # packet creation
-    with open(file, 'rb') as file:
+    with open(file_path, 'rb') as file:
         while True:
 
             data_chunk = file.read(PACKET_SIZE)
-            if (data_chunk == NULL):
+            if not data_chunk:
                 break
-            
+           
             checksum = calculate_checksum(data_chunk)
             header = create_header(HEADER_FORMAT, packet_id, nb_packets, file_name, checksum)
 
@@ -48,12 +48,19 @@ def divide_into_packets(file_path):
     return packets
 
 # retrieve different packets to form the original file
-def reconstruct_file(packets, file_name, nb_packets):
+def reconstruct_file(packets, file_name, new_file_name):
+    with open(new_file_name, 'wb') as file:
+        for packet in packets:
+            data_chunk = bytes.fromhex(packet[102:])
+            new_file_name.write(data_chunk)
+        
+    
     return null
+
 
 def main():
     # Example file path
-    file_path = "example.txt"  # Replace with your file path
+    file_path = "images.jpg"  # Replace with your file path
     
     # Divide the file into packets
     packets = divide_into_packets(file_path)
@@ -67,6 +74,9 @@ def main():
         print(f"Packet {i}:")
         print(f"Header - Packet Number: {unpacked_header[0]}, Total Chunks: {unpacked_header[1]}, File Name: {unpacked_header[2].decode().strip()}")
         print(f"Data Chunk Size: {len(data_chunk)} bytes")
+        print(f"Content of chunk: {data_chunk}")
+
+    reconstruct_file(packets, file_path, "images2.jpg")
 
 if __name__ == "__main__":
     main()
