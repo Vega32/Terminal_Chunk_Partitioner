@@ -48,19 +48,30 @@ def divide_into_packets(file_path):
     return packets
 
 # retrieve different packets to form the original file
-def reconstruct_file(packets, file_name, new_file_name):
+def reconstruct_file(packets, new_file_name):
     with open(new_file_name, 'wb') as file:
+        count =0
         for packet in packets:
-            data_chunk = bytes.fromhex(packet[102:])
-            new_file_name.write(data_chunk)
-        
+            data_chunk = packet[HEADER_SIZE:]
+
+            unpacked_header = struct.unpack(HEADER_FORMAT, packet[:HEADER_SIZE])
+            retrieved_checksum = unpacked_header[3].decode().strip()
+            expected_checksum = calculate_checksum(data_chunk)
+
+            # checking reliability using the checksum
+            if unpacked_header[3] != expected_checksum:
+                print(f"Checksum mismatch for packet ID {unpacked_header[count]}. Expected: {expected_checksum}, Actual: {retrieved_checksum}")
+                return False
+            
+            file.write(data_chunk)
+            count += 1
     
-    return null
+    return True
 
 
 def main():
     # Example file path
-    file_path = "images.jpg"  # Replace with your file path
+    file_path = "3.Smooz Draman Bayss.wav"  # Replace with your file path
     
     # Divide the file into packets
     packets = divide_into_packets(file_path)
@@ -76,7 +87,8 @@ def main():
         print(f"Data Chunk Size: {len(data_chunk)} bytes")
         print(f"Content of chunk: {data_chunk}")
 
-    reconstruct_file(packets, file_path, "images2.jpg")
+    if (reconstruct_file(packets, "dupe song.wav")):
+        print("Success!!")
 
 if __name__ == "__main__":
     main()
