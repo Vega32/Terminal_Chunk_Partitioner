@@ -18,6 +18,7 @@ class PeerNode:
 
     def start_broadcasting(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            
             s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             while True:
                 message = f"NODE:{self.host}:{self.port}".encode()
@@ -26,6 +27,7 @@ class PeerNode:
 
     def listen_for_broadcasts(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((self.host, 5000))  # Bind to the same port used for broadcasting
             while True:
                 data, addr = s.recvfrom(1024)
