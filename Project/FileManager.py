@@ -1,6 +1,7 @@
 import os
 import struct
 import hashlib
+import pickle
 
 class FileManager:
     PACKET_SIZE = 512  # 512 Byte chunks
@@ -8,13 +9,15 @@ class FileManager:
     HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 
     # calculate checksum to check correctness of file
+    @staticmethod
     def calculate_checksum(data_chunk):
         return hashlib.md5(data_chunk).hexdigest().encode('utf-8')
 
     # add header to packet
+    @staticmethod
     def create_header(string_format, packet_id, nb_packets, file_name, checksum):
         return struct.pack(
-            HEADER_FORMAT,
+            FileManager.HEADER_FORMAT,
             packet_id,
             nb_packets,
             file_name[:32],
@@ -22,24 +25,25 @@ class FileManager:
         )
 
     # divide original file in 512 Byte maximum sized chunks
+    @staticmethod
     def divide_into_packets(file_path):
         packets = []
 
         packet_id = 0
         file_name = os.path.basename(file_path).encode('utf-8')
         file_full_size = os.path.getsize(file_path)
-        nb_packets = (file_full_size + PACKET_SIZE -1) // PACKET_SIZE
+        nb_packets = (file_full_size + FileManager.PACKET_SIZE -1) // FileManager.PACKET_SIZE
         
         # packet creation
         with open(file_path, 'rb') as file:
             while True:
 
-                data_chunk = file.read(PACKET_SIZE)
+                data_chunk = file.read(FileManager.PACKET_SIZE)
                 if not data_chunk:
                     break
             
-                checksum = calculate_checksum(data_chunk)
-                header = create_header(HEADER_FORMAT, packet_id, nb_packets, file_name, checksum)
+                checksum = FileManager.calculate_checksum(data_chunk)
+                header = FileManager.create_header(FileManager.HEADER_FORMAT, packet_id, nb_packets, file_name, checksum)
 
                 packet = header + data_chunk
                 packets.append(packet)
@@ -49,15 +53,16 @@ class FileManager:
         return packets
 
     # retrieve different packets to form the original file
+    @staticmethod
     def reconstruct_file(packets, new_file_name):
         with open(new_file_name, 'wb') as file:
             count =0
             for packet in packets:
-                data_chunk = packet[HEADER_SIZE:]
+                data_chunk = packet[FileManager.HEADER_SIZE:]
 
-                unpacked_header = struct.unpack(HEADER_FORMAT, packet[:HEADER_SIZE])
+                unpacked_header = struct.unpack(FileManager.HEADER_FORMAT, packet[:FileManager.HEADER_SIZE])
                 retrieved_checksum = unpacked_header[3].decode().strip()
-                expected_checksum = calculate_checksum(data_chunk)
+                expected_checksum = FileManager.calculate_checksum(data_chunk)
 
                 # checking reliability using the checksum
                 if unpacked_header[3] != expected_checksum:
@@ -69,6 +74,21 @@ class FileManager:
         
         return True
 
+    #Store array of packets as object file
+    @staticmethod
+    def store_array_object_file(packets, file_name):
+        with open(file_name + '.pkl', 'wb') as file:
+            pickle.dump(packets, file)
+        
+        return "Success"
+    
+    #Store array of packets as object file
+    @staticmethod
+    def load_array_object_file(pickle_file_name):
+        with open(pickle_file_name, 'rb') as file:
+            loaded_packets = pickle.load(file)
+        
+        return loaded_packets
 
     '''def main():
         # Example file path
