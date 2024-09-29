@@ -2,6 +2,7 @@ import socket
 import threading
 import FileManager
 import os
+import struct
 
 class P2PNode:
     def __init__(self, host='0.0.0.0', port='12345'):
@@ -21,14 +22,27 @@ class P2PNode:
             threading.Thread(target=self.handle_peer, args=(client_socket,)).start()
 
     def handle_peer(self, client_socket):
+        packet_per_peer=[]
+        
         while True:
             try:
                 message = client_socket.recv(1024)
                 if not message:
                     break
-                print(f"Received: {message}")
-                # Optionally, you could send an acknowledgment back
-                client_socket.send(f"Echo: {message}")
+                if(message=="Stop".encode()):
+                    print("\nEntered if\n")
+                    
+
+                    h=FileManager.FileManager.HEADER_SIZE
+                    unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, packet_per_peer[0][:h])
+                    file_name = unpacked_header[2].decode().strip()
+
+                    print(file_name)
+                    FileManager.FileManager.store_array_object_file(packet_per_peer, f"{file_name.replace('\0','')}_{self.host}_{self.port}")
+                    print("\nFile Created\n")
+                else:
+                    packet_per_peer.append(message)
+                #print(f"Received: {message}")
             except ConnectionResetError:
                 break
         client_socket.close()
@@ -56,6 +70,9 @@ class P2PNode:
             elif command.startswith("send"):
                 _, message = command.split(maxsplit=1)
                 self.upload(message)
+            elif command.startswith("get"):
+                _, message = command.split(maxsplit=1)
+                self.download(message)
             elif command == "exit":
                 break
 
@@ -63,23 +80,33 @@ class P2PNode:
         packets=FileManager.FileManager.divide_into_packets(fileName)
         for i in range (len(packets)):
             self.peers[i%len(self.peers)].send(packets[i])
+        for j in range (len(self.peers)):
+            self.peers[j].send("Stop".encode())
 
 
     def download(self, file_name):
         
-        pickle_files = []
+        unpacked_header=[]
         retrieved_packets = []
         ordered_packets = []
         for peer in self.peers:
             for file in os.listdir():
                 if file.startswith(file_name) and file.endswith('.pkl'):
-                    FileManager.FileManager.load_array_object_file(file)
-                    pickle_files.append(retrieved_packets)
-        
+                    retrieved_packets.append(FileManager.FileManager.load_array_object_file(file))
         count = 0
-        while (count != retrieved_packets[0][4:7]):
+
+        h=FileManager.FileManager.HEADER_SIZE
+        print(retrieved_packets[0][:h])
+        unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, retrieved_packets[0][:h])
+        nb_packets = unpacked_header[1].decode().strip()
+
+        while (count <= nb_packets):
             for packet in retrieved_packets:
-                if (packet[:4] == count):
+
+                unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, retrieved_packets[0][:h])
+                id = unpacked_header[0].decode().strip()
+
+                if (id == count):
                     ordered_packets.append(packet)
                     count += 1
 

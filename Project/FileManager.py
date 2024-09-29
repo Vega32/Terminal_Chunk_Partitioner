@@ -49,7 +49,7 @@ class FileManager:
                 packets.append(packet)
 
                 packet_id += 1
-
+        file.close()
         return packets
 
     # retrieve different packets to form the original file
@@ -71,7 +71,7 @@ class FileManager:
                 
                 file.write(data_chunk)
                 count += 1
-        
+        file.close()
         return True
 
     #Store array of packets as object file
@@ -81,12 +81,14 @@ class FileManager:
             os.remove(file_name)
         with open(file_name + '.pkl', 'wb') as file:
             pickle.dump(packets, file)
+        file.close()
     
     #Store array of packets as object file
     @staticmethod
     def load_array_object_file(pickle_file_name):
         with open(pickle_file_name, 'rb') as file:
             loaded_packets = pickle.load(file)
+        file.close()
         
         return loaded_packets
 
