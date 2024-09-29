@@ -71,8 +71,8 @@ class P2PNode:
                 _, message = command.split(maxsplit=1)
                 self.upload(message)
             elif command.startswith("get"):
-                _, message = command.split(maxsplit=1)
-                self.download(message)
+                _, message, new_file_name = command.split(maxsplit=2)
+                self.download(message, new_file_name)
             elif command == "exit":
                 break
 
@@ -84,33 +84,34 @@ class P2PNode:
             self.peers[j].send("Stop".encode())
 
 
-    def download(self, file_name):
+    def download(self, file_name, new_file_name):
         
+        retrieved_pickle_files = []
         unpacked_header=[]
-        retrieved_packets = []
         ordered_packets = []
         for peer in self.peers:
             for file in os.listdir():
                 if file.startswith(file_name) and file.endswith('.pkl'):
-                    retrieved_packets.append(FileManager.FileManager.load_array_object_file(file))
+                    retrieved_pickle_files.append(FileManager.FileManager.load_array_object_file(file))
         count = 0
 
         h=FileManager.FileManager.HEADER_SIZE
-        print(retrieved_packets[0][:h])
-        unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, retrieved_packets[0][:h])
-        nb_packets = unpacked_header[1].decode().strip()
+        print(retrieved_pickle_files[0][0][:h])
+        unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, retrieved_pickle_files[0][0][:h])
+        nb_packets = unpacked_header[1]
 
-        while (count <= nb_packets):
-            for packet in retrieved_packets:
+        while (count < nb_packets):
+            for retrieved_packet_list in retrieved_pickle_files:
+                for packet in retrieved_packet_list:
+                    unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, packet[:h])
+                    id = unpacked_header[0]
 
-                unpacked_header = struct.unpack(FileManager.FileManager.HEADER_FORMAT, retrieved_packets[0][:h])
-                id = unpacked_header[0].decode().strip()
+                    if (id == count):
+                        ordered_packets.append(packet)
+                        print(count)
+                        count += 1
 
-                if (id == count):
-                    ordered_packets.append(packet)
-                    count += 1
-
-        if (FileManager.FileManager.reconstruct_file(ordered_packets, file_name)):
+        if (FileManager.FileManager.reconstruct_file(ordered_packets, new_file_name)):
             print("Download Successful")
         else:
             print("Something went wrong when retrieving the file")
