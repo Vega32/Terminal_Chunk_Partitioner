@@ -1,4 +1,4 @@
-# P2P-TCP-IP-Project
+# Terminal Chunk Partitioner
 ## 💡 Inspiration
 - Networking is a vital area of computer science, and through this project, we wanted to explore this field, more specifically how systems communicate using TCP/IP, while addressing challenges like data transmission and reliability.
 - We set out to build a distributed Peer-to-Peer (P2P) system capable of splitting large files into manageable chunks for seamless sharing between at least 4 devices.
