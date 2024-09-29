@@ -60,9 +60,10 @@ class P2PNode:
     def printMenu(self):
         print("\n-----------------------------Terminal Chunk Partitioner-----------------------------------\n")
         print("Commands:\n")
-        print("connect [IP] [Port]\n")
-        print("send [File Path]\n")
-        print("get [File Name] [New File Name]\n")
+        print("connect [IP] [Port]")
+        print("send [File Path]")
+        print("get [File Name] [New File Name]")
+        print("help")
         print("exit\n")
 
     def start(self):
@@ -82,6 +83,8 @@ class P2PNode:
                 self.download(message, new_file_name)
             elif command == "exit":
                 break
+            elif command == "help":
+                self.printMenu()
 
     def upload(self, fileName):
         packets=FileManager.FileManager.divide_into_packets(fileName)
